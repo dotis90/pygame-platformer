@@ -11,8 +11,8 @@ class Player(pygame.sprite.Sprite):
         # player movement
         self.direction = pygame.math.Vector2(0, 0)
         self.speed = 5
-        self.gravity = 0.8
-        self.jump_speed = -16
+        self.gravity = 0.5
+        self.jump_speed = -8
 
     def get_input(self):
         keys = pygame.key.get_pressed()
@@ -36,5 +36,3 @@ class Player(pygame.sprite.Sprite):
 
     def update(self):
         self.get_input()
-        self.rect.x += self.direction.x * self.speed
-        self.apply_gravity()
