@@ -70,7 +70,7 @@ class Level:
             player.speed = 0
         else:
             self.world_shift = 0
-            player.speed = 8
+            player.speed = 4
 
     def horizontal_movement_collision(self):
         player = self.player.sprite

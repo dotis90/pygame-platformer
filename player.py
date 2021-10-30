@@ -1,5 +1,6 @@
 import pygame
 from support import import_folder
+from sprite_import import initialize_player_sprites
 
 
 class Player(pygame.sprite.Sprite):
@@ -14,13 +15,13 @@ class Player(pygame.sprite.Sprite):
         # dust particles
         self.import_dust_run_particles()
         self.dust_frame_index = 0
-        self.dust_animation_speed = 0.15
+        self.dust_animation_speed = 0.1
         self.display_surface = surface
         self.create_jump_particles = create_jump_particles
 
         # player movement
         self.direction = pygame.math.Vector2(0, 0)
-        self.speed = .8
+        self.speed = .00000005
         self.gravity = 0.5
         self.jump_speed = -8
 
@@ -34,11 +35,7 @@ class Player(pygame.sprite.Sprite):
 
     def import_character_assets(self):
         character_path = './graphics/character/'
-        self.animations = {'idle': [], 'run': [], 'jump': [], 'fall': []}
-
-        for animation in self.animations.keys():
-            full_path = character_path + animation
-            self.animations[animation] = import_folder(full_path)
+        self.animations = initialize_player_sprites()
 
     def import_dust_run_particles(self):
         self.dust_run_particles = import_folder(
