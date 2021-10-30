@@ -1,6 +1,7 @@
 import pygame
-from tiles import Tile
-from settings import tile_size, SCREEN_WIDTH, SCREEN_HEIGHT
+from support import import_csv_layout, import_cut_graphics
+from tiles import Tile, StaticTile
+from settings import tile_size, screen_width, screen_height
 from player import Player
 from particles import ParticleEffect
 
@@ -8,13 +9,66 @@ from particles import ParticleEffect
 class Level:
     def __init__(self, level_data, surface):
         self.display_surface = surface
-        self.setup_level(level_data)
         self.world_shift = 0
-        self.current_x = 0
+        self.current_x = None
+
+        # player
+        player_layout = import_csv_layout(level_data['player'])
+        self.player = pygame.sprite.GroupSingle()
+        self.goal = pygame.sprite.GroupSingle()
+        self.player_setup(player_layout)
 
         # dust
         self.dust_sprite = pygame.sprite.GroupSingle()
         self.player_on_ground = False
+
+        # ground setup
+        ground_layout = import_csv_layout((level_data['ground']))
+        self.ground_sprites = self.create_tile_group(ground_layout, 'ground')
+
+        # plant setup
+        plant_layout = import_csv_layout((level_data['plants']))
+        self.plant_sprites = self.create_tile_group(plant_layout, 'plants')
+
+    def create_tile_group(self, layout, type):
+        sprite_group = pygame.sprite.Group()
+
+        for row_index, row in enumerate(layout):
+            for col_index, val in enumerate(row):
+                if val != '-1':
+                    x = col_index * tile_size
+                    y = row_index * tile_size
+
+                    if type == 'ground':
+                        ground_tile_list = import_cut_graphics(
+                            './graphics/environment/Wasteland.png')
+                        tile_surface = ground_tile_list[int(val)]
+                        sprite = StaticTile(tile_size, x, y, tile_surface)
+
+                    if type == 'plants':
+                        plant_tile_list = import_cut_graphics(
+                            './graphics/environment/Wasteland.png')
+                        tile_surface = plant_tile_list[int(val)]
+                        sprite = StaticTile(tile_size, x, y, tile_surface)
+
+                    sprite_group.add(sprite)
+
+        return sprite_group
+
+    def player_setup(self, layout):
+        for row_index, row in enumerate(layout):
+            for col_index, val in enumerate(row):
+                x = col_index * tile_size
+                y = row_index * tile_size
+                if val == '0':
+                    sprite = Player((x, y), self.display_surface,
+                                    self.create_jump_particles)
+                    self.player.add(sprite)
+                if val == '1':
+                    player_goal_surface = pygame.image.load(
+                        'graphics/character/goal.png').convert_alpha()
+                    sprite = StaticTile(tile_size, x, y, player_goal_surface)
+                    self.goal.add(sprite)
 
     def create_jump_particles(self, pos):
         if self.player.sprite.facing_right:
@@ -62,10 +116,10 @@ class Level:
         player_x = player.rect.centerx
         direction_x = player.direction.x
 
-        if player_x < SCREEN_WIDTH / 4 and direction_x < 0:
+        if player_x < screen_width / 4 and direction_x < 0:
             self.world_shift = 8
             player.speed = 0
-        elif player_x > SCREEN_WIDTH - (SCREEN_WIDTH / 4) and direction_x > 0:
+        elif player_x > screen_width - (screen_width / 4) and direction_x > 0:
             self.world_shift = -8
             player.speed = 0
         else:
@@ -75,8 +129,8 @@ class Level:
     def horizontal_movement_collision(self):
         player = self.player.sprite
         player.rect.x += player.direction.x * player.speed
-
-        for sprite in self.tiles.sprites():
+        collidable_sprites = self.ground_sprites.sprites()
+        for sprite in collidable_sprites:
             if sprite.rect.colliderect(player.rect):
                 if player.direction.x < 0:
                     player.rect.left = sprite.rect.right
@@ -95,8 +149,8 @@ class Level:
     def vertical_movement_collision(self):
         player = self.player.sprite
         player.apply_gravity()
-
-        for sprite in self.tiles.sprites():
+        collidable_sprites = self.ground_sprites.sprites()
+        for sprite in collidable_sprites:
             if sprite.rect.colliderect(player.rect):
                 if player.direction.y > 0:
                     player.rect.bottom = sprite.rect.top
@@ -114,19 +168,27 @@ class Level:
 
     def run(self):
 
+        # ground
+        self.ground_sprites.update(self.world_shift)
+        self.ground_sprites.draw(self.display_surface)
+
+        # plants
+        self.plant_sprites.update(self.world_shift)
+        self.plant_sprites.draw(self.display_surface)
+
         # dust particles
         self.dust_sprite.update(self.world_shift)
         self.dust_sprite.draw(self.display_surface)
 
-        # level tiles
-        self.tiles.update(self.world_shift)
-        self.tiles.draw(self.display_surface)
-        self.scroll_x()
-
         # player
         self.player.update()
         self.horizontal_movement_collision()
+
         self.get_player_on_ground()
         self.vertical_movement_collision()
         self.create_landing_dust()
+
+        self.scroll_x()
         self.player.draw(self.display_surface)
+        self.goal.update(self.world_shift)
+        self.goal.draw(self.display_surface)
