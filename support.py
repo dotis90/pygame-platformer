@@ -30,9 +30,6 @@ def import_cut_graphics(path):
     tile_num_x = int(surface.get_size()[0] / tile_size)
     tile_num_y = int(surface.get_size()[1] / tile_size)
 
-    print(tile_num_x)
-    print(tile_num_y)
-
     cut_tiles = []
     for row in range(tile_num_y):
         for col in range(tile_num_x):
