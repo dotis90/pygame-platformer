@@ -23,7 +23,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = pygame.math.Vector2(0, 0)
         self.speed = 4
         self.gravity = 0.5
-        self.jump_speed = -8
+        self.jump_speed = -10
 
         # player status
         self.status = 'idle'
@@ -99,6 +99,7 @@ class Player(pygame.sprite.Sprite):
             self.direction.x = 0
 
         if keys[pygame.K_SPACE] and self.on_ground:
+            pygame.key.set_repeat()
             self.jump()
             self.create_jump_particles(self.rect.midbottom)
 
